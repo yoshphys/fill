@@ -1,0 +1,342 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+
+import math
+
+import argparse
+import ROOT
+
+
+#__________________________________________________
+
+
+DLM_CHARS = None
+CMT_CHARS = "#"
+
+
+#__________________________________________________
+
+
+class myArgParser:
+
+
+    __args = {"path":  None,
+              "xcol":  0,
+              "xbins": 100,
+              "xmin":  None,
+              "xmax":  None,
+              "ycol":  None,
+              "ybins": 100,
+              "ymin":  None,
+              "ymax":  None,
+              "dlm":   DLM_CHARS,
+              "cmt" :  CMT_CHARS}
+
+    __parser = None
+
+    __description='''
+    A python script to show the distribution of a series of values in a column in a file
+    '''
+    __epilog='''
+    This is test epilog.
+    '''
+
+    __optConf = {
+            "xcol":  {"flag": ["-x", "--xcol"],
+                      "type": int,
+                      "help": "target column number for x-axis",
+                      "metavar": "Xcol"},
+            "xbins": {"flag": ["--xbins"],
+                      "type": int,
+                      "help": "number of bins for x-axis",
+                      "metavar": "XBins"},
+            "xmax":  {"flag": ["--xmax"],
+                      "type": str,
+                      "help": "maximum value for x-axis (must be string expression)",
+                       "metavar": "XMax"},
+            "xmin":  {"flag": ["--xmin"],
+                      "type": str,
+                      "help": "minimum value for x-axis (must be string expression)",
+                      "metavar": "XMin"},
+            "ycol":  {"flag": ["-y", "--ycol"],
+                      "type": int,
+                      "help": "target column number for y-axis",
+                      "metavar": "Ycol"},
+            "ybins": {"flag": ["--ybins"],
+                      "type": int,
+                      "help": "number of bins for y-axis",
+                      "metavar": "YBins"},
+            "ymax":  {"flag": ["--ymax"],
+                      "type": str,
+                      "help": "maximum value for y-ayis (must be string expression)",
+                      "metavar": "YMax"},
+            "ymin":  {"flag": ["--ymin"],
+                      "type": str,
+                      "help": "minimum value for y-ayis (must be string expression)",
+                      "metavar": "YMin"},
+            "dlm":   {"flag": ["--dlm"],
+                      "type": str,
+                      "help": "data delimiter used in data file",
+                      "metavar": "DlmChars"},
+            "cmt":   {"flag": ["--cmt"],
+                      "type": str,
+                      "help": "comment delimiter used in data file",
+                      "metavar": "CmtChars"}
+            }
+
+
+    def __init__(self):
+        self.__parser = argparse.ArgumentParser(description=self.__description, epilog=self.__epilog)
+
+        self.__parser.add_argument("path", type=str)
+        for val in self.__optConf.values():
+            self.__parser.add_argument(*(val["flag"]), type=val["type"], help=val["help"], metavar=val["metavar"])
+
+
+    def __assignOptArg(self, refCont, key):
+        if key in refCont.keys() and key in self.__args.keys():
+            if refCont[key] is not None:
+                self.__args[key] = refCont[key]
+        return
+
+
+    def __assignStrOptArgToFloat(self, refCont, key):
+        if key in refCont.keys() and key in self.__args.keys():
+            if refCont[key] is not None:
+                refVal = refCont[key]
+                try:
+                    self.__args[key] = float(refVal)
+                except (ValueError, TypeError):
+                    msg = f"argument of the flag of \'{self.__optConf[key]['flag'][0]}\' must be convertable to float: \'{refVal}\'"
+                    self.__parser.error(msg)
+        return
+
+    def parse(self):
+        if None is self.__parser: return
+        refCont = vars(self.__parser.parse_args())
+        self.__assignOptArg(refCont, "path")
+        self.__assignOptArg(refCont, "xcol")
+        self.__assignOptArg(refCont, "xbins")
+        self.__assignStrOptArgToFloat(refCont, "xmin")
+        self.__assignStrOptArgToFloat(refCont, "xmax")
+        self.__assignOptArg(refCont, "ycol")
+        self.__assignOptArg(refCont, "ybins")
+        self.__assignStrOptArgToFloat(refCont, "ymin")
+        self.__assignStrOptArgToFloat(refCont, "ymax")
+        self.__assignOptArg(refCont, "dlm")
+        self.__assignOptArg(refCont, "cmt")
+        return
+
+    def dump(self):
+        buff = ""
+        for key, val in self.__args.items():
+            buff += f"{key:>8}: {val}\n"
+        sys.stdout.write(buff)
+        return
+
+    def getArg(self, key):
+        val = None
+        if key in self.__args.keys():
+            val = self.__args[key]
+        return val
+
+    def getPath(self):
+        return self.getArg("path")
+        
+    def getXCol(self):
+        return self.getArg("xcol")
+
+    def getXBins(self):
+        return self.getArg("xbins")
+
+    def getXRange(self):
+        return self.getArg("xmin"), self.getArg("xmax")
+
+    def getYCol(self):
+        return self.getArg("ycol")
+
+    def getYBins(self):
+        return self.getArg("ybins")
+
+    def getYRange(self):
+        return self.getArg("ymin"), self.getArg("ymax")
+
+    def getDlmChars(self):
+        return self.getArg("dlm")
+
+    def getCmtChars(self):
+        return self.getArg("cmt")
+
+
+#__________________________________________________
+
+
+def makeHistogramAll(path, xbins, xmin, xmax):
+
+    xmaxval = -math.inf
+    xminval = math.inf
+    xcont = list()
+    with open(path, 'r') as f:
+        for line in f:
+            words = [e.strip() for e in line.split(CMT_CHARS)[0].split(DLM_CHARS)]
+            for iword in words:
+                try:
+                    x = float(iword)
+                except (ValueError, TypeError):
+                    continue
+                if 0 < x - xmaxval: xmaxval = x
+                if 0 < xminval - x: xminval = x
+                xcont.append(x)
+
+    if 0 == len(xcont): return None
+
+    if xmax is None: xmax = xmaxval + (xmaxval - xminval) / xbins
+    if xmin is None: xmin = xminval
+
+    h = ROOT.TH1F("h", "h", xbins, xmin, xmax)
+    for x in xcont: h.Fill(x)
+
+    return h
+
+
+#__________________________________________________
+
+
+def makeHistogram(path, xcol, xbins, xmin, xmax):
+
+    xmaxval = -math.inf
+    xminval = math.inf
+    xcont = list()
+    maxcol = xcol
+    with open(path, 'r') as f:
+        for line in f:
+            words = [e.strip() for e in line.split(CMT_CHARS)[0].split(DLM_CHARS)]
+            if 0 == len(words) or 0 < maxcol - len(words): continue
+            xword = words[xcol - 1]
+            try:
+                x = float(xword)
+            except (ValueError, TypeError):
+                continue
+            if 0 < x - xmaxval: xmaxval = x
+            if 0 < xminval - x: xminval = x
+            xcont.append(x)
+
+    if 0 == len(xcont): return None
+
+    if xmax is None: xmax = xmaxval + (xmaxval - xminval) / xbins
+    if xmin is None: xmin = xminval
+
+    h = ROOT.TH1F("h", "h", xbins, xmin, xmax)
+    for x in xcont: h.Fill(x)
+
+    return h
+
+
+#__________________________________________________
+
+
+def makeHistogram2D(path, xcol, xbins, xmin, xmax, ycol, ybins, ymin, ymax):
+
+    xmaxval = -math.inf
+    xminval = math.inf
+    ymaxval = -math.inf
+    yminval = math.inf
+    xcont = list()
+    ycont = list()
+    maxcol = ycol if 0 < ycol - xcol else xcol
+    with open(path, 'r') as f:
+        for line in f:
+            words = [e.strip() for e in line.split(CMT_CHARS)[0].split(DLM_CHARS)]
+            if 0 == len(words) or 0 < maxcol - len(words): continue
+            xword = words[xcol - 1]
+            yword = words[ycol - 1]
+            try:
+                x = float(words[xcol - 1])
+                y = float(words[ycol - 1])
+            except (ValueError, TypeError):
+                continue
+            if 0 < x - xmaxval: xmaxval = x
+            if 0 < xminval - x: xminval = x
+            if 0 < y - ymaxval: ymaxval = y
+            if 0 < yminval - y: yminval = y
+            xcont.append(x)
+            ycont.append(y)
+
+    if 0 == len(xcont) or 0 == len(ycont): return None
+
+    if xmax is None: xmax = xmaxval + (xmaxval - xminval) / xbins
+    if xmin is None: xmin = xminval
+    if ymax is None: ymax = ymaxval + (ymaxval - yminval) / ybins
+    if ymin is None: ymin = yminval
+
+    h = ROOT.TH2F("h", "h", xbins, xmin, xmax, ybins, ymin, ymax)
+    for (x, y) in zip(xcont, ycont): h.Fill(x, y)
+
+    return h
+
+
+#__________________________________________________
+
+
+def main():
+    parser = myArgParser()
+    parser.parse()
+    # parser.dump()
+
+    global DLM_CHARS
+    DLM_CHARS = parser.getDlmChars()
+    global CMT_CHARS
+    CMT_CHARS = parser.getCmtChars()
+
+    path = parser.getPath()
+    if not os.path.isfile(path):
+        sys.stderr.write("ERROR: no such file: " + path + "\n")
+        return 1
+
+    xcol  = parser.getXCol()
+    xbins = parser.getXBins()
+    xmin, xmax = parser.getXRange()
+
+    ycol  = parser.getYCol()
+    ybins = parser.getYBins()
+    ymin, ymax = parser.getYRange()
+
+    fl2d = False if ycol is None else True
+
+    h = None
+    if fl2d:
+        h = makeHistogram2D(path, xcol, xbins, xmin, xmax, ycol, ybins, ymin, ymax)
+    else:
+        if 0 == xcol:
+            h = makeHistogramAll(path, xbins, xmin, xmax)
+        elif 0 < xcol: 
+            h = makeHistogram(path, xcol, xbins, xmin, xmax)
+        else:
+            pass
+
+    if h is None:
+        sys.stderr.write("WARNING: no entries\n")
+        return 0
+
+    c = ROOT.TCanvas("c", "c")
+
+    h.Draw()
+    c.Update()
+
+    sys.stdout.write("Press Ctrl-C on the canvas to exit.\n")
+    while True:
+        try:
+            if None == c.WaitPrimitive(): break
+        except KeyboardInterrupt:
+            break
+
+    return 0
+
+
+#__________________________________________________
+
+
+if __name__ == "__main__":
+    main()
