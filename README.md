@@ -19,16 +19,17 @@ python3 -i fill [options] data_file
 `data_file`: Path to the input data file.
 
 ## Optional arguments
-`-x`, `--xcol`: Target column number for the x-axis (default: 0).
-`--xbins`: Number of bins for the x-axis (default: 100).
-`--xmin`: Minimum value for the x-axis (must be a string expression).
-`--xmax`: Maximum value for the x-axis (must be a string expression).
-`-y`, `--ycol`: Target column number for the y-axis.
-`--ybins`: Number of bins for the y-axis (default: 100).
-`--ymin`: Minimum value for the y-axis (must be a string expression).
-`--ymax`: Maximum value for the y-axis (must be a string expression).
-`--dlm`: Data delimiter used in the data file (default: None).
-`--cmt`: Comment delimiter used in the data file (default: "#").
+
+- `-x`, `--xcol`: Target column number for the x-axis (default: 0).
+- `--xbins`: Number of bins for the x-axis (default: 100).
+- `--xmin`: Minimum value for the x-axis (must be a string expression).
+- `--xmax`: Maximum value for the x-axis (must be a string expression).
+- `-y`, `--ycol`: Target column number for the y-axis.
+- `--ybins`: Number of bins for the y-axis (default: 100).
+- `--ymin`: Minimum value for the y-axis (must be a string expression).
+- `--ymax`: Maximum value for the y-axis (must be a string expression).
+- `--dlm`: Data delimiter used in the data file (default: None).
+- `--cmt`: Comment delimiter used in the data file (default: "#").
 
 ## Examples
 
@@ -65,9 +66,9 @@ python3 -i fill --xcol 1 --dlm "," --cmt "#" data.txt
 
 ## Notes
 
-The script assumes that the data file is formatted with columns separated by the specified delimiter, and comments are denoted by the specified comment delimiter.
-The input file can contain any number of rows, but the data must be properly formatted to be read by the script.
-The script will generate a canvas with the histogram and wait for a `Ctrl-C` input on the canvas to exit.
+- The script assumes that the data file is formatted with columns separated by the specified delimiter, and comments are denoted by the specified comment delimiter.
+- The input file can contain any number of rows, but the data must be properly formatted to be read by the script.
+- The script will generate a canvas with the histogram and wait for a `Ctrl-C` input on the canvas to exit.
 
 <!--
 ## Features
