@@ -1,61 +1,73 @@
 # fill
- A program to make a histogram from data in a text file
 
+This is a Python script that utilizes the [ROOT](https://root.cern) library to draw histograms from data in a file. It supports 1D and 2D histograms, and provides options to customize binning, axis ranges, and data delimiters.
 
-## Overview
+Requirements
 
- `fill` is a script to make a histogram from data in a text file.
- [ROOT](https://root.cern.ch) is used to show histograms.
-
-
-## Requirement
- - python (> 3.9.9)
- - [ROOT](https://root.cern.ch) (> 6.24/06)
-
+- Python 3.x
+- [ROOT](https://root.cern) library for Python
 
 ## Usage
- To make a histogram from following file (`data1.txt`),
 
- > <pre> 0.905957</pre>  
- > <pre> 0.471139</pre>  
- > <pre>-0.607482</pre>  
- > <pre> 1.003078</pre>  
- > <pre>-0.583407</pre>  
- > <pre>-0.994423</pre>  
- > <pre>-0.698762</pre>  
- > <pre>-0.289269</pre>  
- > <pre> 2.345332</pre>  
- > <pre> 2.110272</pre>  
+```sh
+python3 -i fill [options] data_file
 
- you may just run the following command.
+```
 
- ```
- $ fill data1.txt
- ```
+## Positional arguments
 
- Suppose that you have following file (`data2.txt`).
+`data_file`: Path to the input data file.
 
- > <pre>-0.393638    0.0549356</pre>  
- > <pre> 0.8376      0.941336</pre>  
- > <pre> 0.35987    -0.732858</pre>  
- > <pre>-1.09077    -1.25002</pre>  
- > <pre>-0.0680796   0.409349</pre>  
- > <pre>-1.17037    -0.341653</pre>  
- > <pre>-0.322438    0.192855</pre>  
- > <pre>-2.23153    -1.2349</pre>  
- > <pre>-0.323323    0.886307</pre>  
- > <pre> 1.18789     1.80288</pre>  
+## Optional arguments
+`-x`, `--xcol`: Target column number for the x-axis (default: 0).
+`--xbins`: Number of bins for the x-axis (default: 100).
+`--xmin`: Minimum value for the x-axis (must be a string expression).
+`--xmax`: Maximum value for the x-axis (must be a string expression).
+`-y`, `--ycol`: Target column number for the y-axis.
+`--ybins`: Number of bins for the y-axis (default: 100).
+`--ymin`: Minimum value for the y-axis (must be a string expression).
+`--ymax`: Maximum value for the y-axis (must be a string expression).
+`--dlm`: Data delimiter used in the data file (default: None).
+`--cmt`: Comment delimiter used in the data file (default: "#").
 
- If you run the command `fill data2.txt`, 1D-histogram with all elements in `data2.txt` will be shown.
+## Examples
 
- In the case you want to make 2D-histogram to see the correlation between the data in the column-1 and those of column-2, you may run the following command,
+### Plot a 1D histogram using all values in a file:
 
- ```
- $ fill data2.txt --xcol 1 --ycol 2
- ```
+```sh
+python3 -i fill data.txt
 
- You can also specify the number of bins for each axis, the range of each axis, delimiter used in data file, and comment delimiter used in data file.
- 
+```
+
+### Plot a 1D histogram using values from a specific column:
+
+```sh
+python3 -i fill --xcol 2 data.txt
+```
+
+### Plot a 2D histogram using values from two specific columns:
+
+```sh
+python3 -i fill --xcol 1 --ycol 2 data.txt
+```
+
+### Customize binning and axis range:
+
+```sh
+python3 -i fill --xcol 1 --xbins 50 --xmin "0" --xmax "100" data.txt
+```
+
+### Specify data delimiter and comment delimiter:
+
+```sh
+python3 -i fill --xcol 1 --dlm "," --cmt "#" data.txt
+```
+
+## Notes
+
+The script assumes that the data file is formatted with columns separated by the specified delimiter, and comments are denoted by the specified comment delimiter.
+The input file can contain any number of rows, but the data must be properly formatted to be read by the script.
+The script will generate a canvas with the histogram and wait for a `Ctrl-C` input on the canvas to exit.
 
 <!--
 ## Features
