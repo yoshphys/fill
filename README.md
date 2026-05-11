@@ -1,5 +1,8 @@
 # fill
 
+> **This repository is archived and no longer maintained.**
+> The successor project is [easy-graph](https://github.com/yoshphys/easy-graph).
+
 This is a Python script that utilizes the [ROOT](https://root.cern) library to draw histograms from data in a file. It supports 1D and 2D histograms, and provides options to customize binning, axis ranges, and data delimiters.
 
 Requirements
